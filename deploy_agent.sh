@@ -70,7 +70,8 @@ build_roster_option_a() {
     local dest="$1" count="$2"
     local header total
     header=$(head -n 1 "$TEMPLATES_DIR/assets.csv")
-    total=$(( $(wc -l < "$TEMPLATES_DIR/assets.csv") - 1 ))
+    # awk's NR (unlike wc -l) counts a final line even without a trailing newline.
+    total=$(( $(awk 'END{print NR}' "$TEMPLATES_DIR/assets.csv") - 1 ))
     if [ "$count" -gt "$total" ]; then
         echo "   Note: only $total template rows available; using $total instead of $count."
         count=$total
@@ -161,10 +162,22 @@ deploy_feature() {
 
     arm_deploy_trap
 
-    mkdir -p "$PROJECT_DIR/Helpers" "$PROJECT_DIR/reports"
+    if ! mkdir -p "$PROJECT_DIR/Helpers" "$PROJECT_DIR/reports"; then
+        echo "ERROR: could not create $PROJECT_DIR structure (permission denied?)." >&2
+        disarm_deploy_trap
+        return 1
+    fi
 
-    cp "$TEMPLATES_DIR/attendance_checker.py" "$PROJECT_DIR/attendance_checker.py"
-    cp "$TEMPLATES_DIR/config.json" "$PROJECT_DIR/Helpers/config.json"
+    if ! cp "$TEMPLATES_DIR/attendance_checker.py" "$PROJECT_DIR/attendance_checker.py"; then
+        echo "ERROR: could not copy attendance_checker.py into $PROJECT_DIR (permission denied?)." >&2
+        disarm_deploy_trap
+        return 1
+    fi
+    if ! cp "$TEMPLATES_DIR/config.json" "$PROJECT_DIR/Helpers/config.json"; then
+        echo "ERROR: could not copy config.json into $PROJECT_DIR/Helpers (permission denied?)." >&2
+        disarm_deploy_trap
+        return 1
+    fi
 
     echo ""
     echo "How should the roster (Helpers/assets.csv) be built?"
@@ -195,8 +208,16 @@ deploy_feature() {
             ;;
     esac
 
-    chmod +x "$PROJECT_DIR/attendance_checker.py"
-    chmod 600 "$PROJECT_DIR/Helpers/config.json"
+    if ! chmod +x "$PROJECT_DIR/attendance_checker.py"; then
+        echo "ERROR: could not chmod +x attendance_checker.py (permission denied?)." >&2
+        disarm_deploy_trap
+        return 1
+    fi
+    if ! chmod 600 "$PROJECT_DIR/Helpers/config.json"; then
+        echo "ERROR: could not chmod 600 Helpers/config.json (permission denied?)." >&2
+        disarm_deploy_trap
+        return 1
+    fi
     echo ""
     echo "Permissions set:"
     ls -l "$PROJECT_DIR/attendance_checker.py"
