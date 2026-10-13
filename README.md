@@ -55,14 +55,6 @@ together.
    reformatting, no reordering, no touching any other key.
 7. Hands off to Feature 2 to prove the deployed project actually launches.
 
-### Option A vs B / total_sessions relationship
-
-`total_sessions` must always equal `prior sessions recorded in the roster
-+ 1` (today's session). The sample template roster carries 4 prior
-sessions per student, so Option A keeps `total_sessions: 5`. A freshly
-generated Option B roster has 0 prior sessions, so `total_sessions` is
-set to `1`.
-
 ## Run (Feature 2)
 
 ```
@@ -116,18 +108,16 @@ If either signal fires mid-deploy:
 
 ### How this was tested
 
-On the sandbox, a deploy was started and piped partial input (project
-name answered, then stalled at the roster-option prompt) via an
-interactive `srv session`, then `kill -INT` / `kill -TSTP` were sent to
-the running `deploy_agent.sh` process. Both signals were confirmed to:
-print the interruption message, produce
-`attendance_tracker_<name>_archive.zip` containing the partial directory
-tree, and remove `attendance_tracker_<name>/` from disk.
+Start a deploy, answer the project name, then press Ctrl+C or Ctrl+Z at
+the roster-option prompt. Both signals were confirmed to: print the
+interruption message, produce `attendance_tracker_<name>_archive.zip`
+containing the partial directory tree, and remove
+`attendance_tracker_<name>/` from disk.
 
 ## How the deployed app structure was verified
 
 Beyond Feature 1 auto-invoking Feature 2, deployments were tested end to
-end on the sandbox:
+end:
 
 - Option A deploy with a handful of students, Option B deploy (confirming
   `total_sessions` became `1` via `grep` on the deployed `config.json`).
@@ -145,13 +135,3 @@ end on the sandbox:
 - Feature 3 after that session, confirming both logs landed in their
   timestamped archive paths, and a second scenario where everyone was
   marked present (no `absent.log`) to confirm the graceful no-crash path.
-
-## Repository layout
-
-```
-deploy_agent.sh      - the master script (menu-driven, three features)
-templates/           - unmodified source files shipped with the project
-  attendance_checker.py
-  assets.csv
-  config.json
-```
