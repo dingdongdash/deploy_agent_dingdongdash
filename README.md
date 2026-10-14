@@ -4,6 +4,8 @@ Shell-scripted deploy/run/archive automation for the Student Attendance
 Tracker Python app. `attendance_checker.py` itself is never modified -
 everything here is scripting around it.
 
+YT Video at https://github.com/dingdongdash/deploy_agent_dingdongdash
+
 ## Feature selection
 
 `./deploy_agent.sh` always shows an interactive menu:
